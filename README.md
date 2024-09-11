@@ -18,7 +18,7 @@ python -m deeplearning.training.run_training
 python -m deeplearning.inference.run_inference
 ```
 
-## Easy to Use！！！:relaxed:
+## :relaxed: Easy to Use！！！ 
 * The code for "Structure-Aware Brightness Augmentation" is mainly found in `src/datasets/utils/StructureAwareBrightnessAugmentation.py`. The code is as follows:
 ```python
 import numpy as np
