@@ -5,7 +5,7 @@ This is the repository for the source code of the paper "Structure-Aware Single-
 
 ## Model training and inference
 The complete source code is located in the `src` folder. To use this project, follow the steps below:
-'''
+`
 # change the folder name
 mv ./src ./deeplearning
 cd  deeplearning
@@ -15,4 +15,4 @@ python -m deeplearning.training.run_training
 
 # Inference
 python -m deeplearning.inference.run_inference
-'''
+`
