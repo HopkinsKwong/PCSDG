@@ -159,4 +159,19 @@ class UNetPCSDG(nn.Module):
         for sf in self.sfs: sf.remove()
 ```
 
+## Citation :heart_eyes: :fire:
+If you find this repo useful for your research, please consider citing the paper as follows:
+```
+@article{JIANG2025106801,
+title = {Structure-aware single-source generalization with pixel-level disentanglement for joint optic disc and cup segmentation},
+journal = {Biomedical Signal Processing and Control},
+volume = {99},
+pages = {106801},
+year = {2025},
+author = {Jia-Xuan Jiang and Yuee Li and Zhong Wang}
+}
+```
+
+## Acknowledgment :sparkles:
+This code is based on implementations by CCSDG ([https://github.com/ShishuaiHu/CCSDG](https://github.com/ShishuaiHu/CCSDG))
 
