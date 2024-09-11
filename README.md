@@ -164,7 +164,7 @@ class UNetPCSDG(nn.Module):
 ## Citation :heart_eyes: :fire:
 If you find this repo useful for your research, please consider citing the paper as follows:
 ```
-@article{JIANG2025106801,
+@article{jiangpcsdg2025,
 title = {Structure-aware single-source generalization with pixel-level disentanglement for joint optic disc and cup segmentation},
 journal = {Biomedical Signal Processing and Control},
 volume = {99},
