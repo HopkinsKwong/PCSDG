@@ -68,7 +68,7 @@ def train(args):
         model.load_state_dict(params['model_state_dict'])
         optimizer.load_state_dict(params['optimizer_state_dict'])
         start_epoch = params['epoch']
-    print('start epoch: {} + SABA'.format(start_epoch))
+    print('start epoch: {}'.format(start_epoch))
 
     amp_grad_scaler = GradScaler()
     criterion = nn.BCEWithLogitsLoss()
@@ -85,7 +85,7 @@ def train(args):
         train_disc_dice_list = list()
         train_cup_dice_list = list()
         for iter, batch in enumerate(tr_dataloader):
-            data = torch.from_numpy(batch['SABA']).cuda().to(dtype=torch.float32)
+            data = torch.from_numpy(batch['data']).cuda().to(dtype=torch.float32)
             seg = torch.from_numpy(batch['seg']).cuda().to(dtype=torch.float32)
             optimizer.zero_grad()
             with autocast():
