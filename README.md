@@ -5,6 +5,8 @@ This article was published in *Biomedical Signal Processing and Control*, with D
 
 Keywords: **Single-source domain generalization**, **Joint optic cup and disc segmentation**.
 
+## Data Preparation
+We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dataset for our experiments. 
 
 ## Model training and inference
 The complete source code is located in the `src` folder. To use this project, follow the steps below:
