@@ -1,6 +1,6 @@
 # PCSDG
 ![Main Model](./figures/model.jpg)
-This is the repository for the source code of the paper "Structure-Aware Single-Source Generalization with Pixel-Level Disentanglement for Joint Optic Disc and Cup Segmentation."
+This is the repository for the source code of the paper "***Structure-Aware Single-Source Generalization with Pixel-Level Disentanglement for Joint Optic Disc and Cup Segmentation***."
 
 This article was published in *Biomedical Signal Processing and Control*, with DOI: [https://doi.org/10.1016/j.bspc.2024.106801](https://doi.org/10.1016/j.bspc.2024.106801). 
 
