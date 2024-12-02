@@ -10,7 +10,7 @@ Keywords: **Single-source domain generalization**, **Joint optic cup and disc se
 We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dataset for our experiments. 
 
 ## Model training and inference
-The complete source code is located in the `src` folder. To use this project, follow the steps below:
+To use this project, follow the steps below:
 ```python
 # Train
 python -m deeplearning.training.run_training
