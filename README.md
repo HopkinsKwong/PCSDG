@@ -12,10 +12,6 @@ We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dat
 ## Model training and inference
 The complete source code is located in the `src` folder. To use this project, follow the steps below:
 ```python
-# change the folder name
-mv ./src ./deeplearning
-cd  deeplearning
-
 # Train
 python -m deeplearning.training.run_training
 
