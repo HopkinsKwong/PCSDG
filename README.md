@@ -24,145 +24,102 @@ python -m deeplearning.inference.run_inference
 ```
 
 ## :relaxed: Easy to Use！！！ 
-* The code for "Structure-Aware Brightness Augmentation" is mainly found in `src/datasets/utils/StructureAwareBrightnessAugmentation.py`. The code is as follows:
+* The code for "Localized Adaptive Style Mixing (LASM)" is mainly found in `models/resvit_LASM.py`. The code is as follows:
 ```python
 import numpy as np
 import random
 from scipy.special import comb
 from PIL import Image
 
-class Structure_Aware_Brightness_Augmentation(object):
-    def __init__(self,pixel_range=(0.,255.)):
-        self.pixel_range = pixel_range
-        self.nPoints = 4
-        self.nTimes = 100000
-        self.slide_limit = 20
-        self._get_polynomial_array()
 
-    def _get_polynomial_array(self):
-        def bernstein_poly(i, n, t):
-            return comb(n, i) * (t ** (n - i)) * (1 - t) ** i
-        t = np.linspace(0.0, 1.0, self.nTimes)
-        self.polynomial_array = np.array([bernstein_poly(i, self.nPoints - 1, t) for i in range(0, self.nPoints)]).astype(np.float32)
+def compute_moments(x):
+    mean = x.mean(dim=(2, 3), keepdim=True)
+    var = x.var(dim=(2, 3), keepdim=True, unbiased=False)
+    skewness = ((x - mean) ** 3).mean(dim=(2, 3), keepdim=True) / (var.sqrt() + 1e-5) ** 3
+    kurtosis = ((x - mean) ** 4).mean(dim=(2, 3), keepdim=True) / (var + 1e-5) ** 2
+    return mean, var, skewness, kurtosis
 
-    def get_bezier_curve(self,points):
-        xPoints = np.array([p[0] for p in points])
-        yPoints = np.array([p[1] for p in points])
-        xvals = np.dot(xPoints, self.polynomial_array)
-        yvals = np.dot(yPoints, self.polynomial_array)
-        return xvals, yvals
 
-    def alpha_non_linear_transformation(self, image_brightness_inputs):
-        target_min = 0.5 # 目标是把alpha映射到0.5~1.5
-        start_point, end_point = image_brightness_inputs.min(), image_brightness_inputs.max()
-        xPoints = [start_point, end_point]
-        yPoints = [start_point, end_point]
-        for _ in range(self.nPoints - 2):
-            xPoints.insert(1, random.uniform(xPoints[0], xPoints[-1]))
-            yPoints.insert(1, random.uniform(yPoints[0], yPoints[-1]))
-        xvals, yvals = self.get_bezier_curve([[x, y] for x, y in zip(xPoints, yPoints)])
-        xvals, yvals = np.sort(xvals), np.sort(yvals)
-        return (np.interp(image_brightness_inputs, xvals, yvals) / 255) + target_min # 0~255线性映射到0.5~1.5，这个返回值就是alpha_brightness
+def high_order_FSM(x, y, alpha, eps=1e-5):
+    # Compute moments for x and y
+    x_mean, x_var, x_skew, x_kurt = compute_moments(x)
+    y_mean, y_var, y_skew, y_kurt = compute_moments(y)
 
-    def brightness_transformation(self,inputs,alpha_brightness):
-        beta_contrast = np.array(random.gauss(0, 0.1) * 255, dtype=np.float32)
-        # beta_contrast = np.clip(beta_contrast, self.pixel_range[0] - np.percentile(inputs, self.slide_limit),
-        #                    self.pixel_range[1] - np.percentile(inputs, 100 - self.slide_limit))
-        return np.clip(np.abs(inputs * alpha_brightness + beta_contrast), self.pixel_range[0], self.pixel_range[1])
+    # Normalize x using its own moments
+    x_norm = (x - x_mean) / torch.sqrt(x_var + eps)
 
-    def Local_Brightness_Augmentation(self, img_npy, mask):
-        batch_size, channels, height, width = img_npy.shape
-        image_brightness = np.zeros((batch_size, 1, height, width), dtype=img_npy.dtype)
-        image_brightness[:, 0, :, :] = 0.299 * img_npy[:, 0, :, :] + 0.587 * img_npy[:, 1, :, :] + 0.114 * img_npy[:, 2, :, :]
-        # img_transposed = img_npy.transpose(1, 2, 0)
-        # img_restored = img_transposed.astype(np.uint8)
-        # image_brightness= Image.fromarray(img_restored).convert("L")
-        # image_brightness = np.array(image_brightness)
-        # image_brightness = image_brightness[np.newaxis]
+    # Apply higher-order matching
+    x_fsm = x_norm * torch.sqrt(y_var + eps) + y_mean
+    x_fsm += (y_skew - x_skew) * (x_norm ** 3) * torch.sqrt(y_var + eps)
+    x_fsm += (y_kurt - x_kurt) * (x_norm ** 4) * torch.sqrt(y_var + eps)
 
-        output_image = np.zeros_like(img_npy)
-        mask = mask.astype(np.int32)
-        mask = np.tile(mask, np.array(img_npy.shape) // np.array(mask.shape))
-        image_brightness = np.tile(image_brightness, np.array(img_npy.shape) // np.array(image_brightness.shape))
+    # Mix the original and matched features
+    x_mix = alpha * x + (1 - alpha) * x_fsm
 
-        for c in range(0,np.max(mask)+1):
-            if (mask==c).sum()==0:continue
-            output_image[mask == c] = self.brightness_transformation(img_npy[mask == c],
-                                                                     self.alpha_non_linear_transformation(image_brightness[mask == c]))
+    return x_mix
 
-        return output_image
+def blockwise_FSM(x, y, alpha, block_size=64, eps=1e-5):
+    # Get the size of the input feature map
+    n, c, h, w = x.size()
+
+    # Ensure the height and width are divisible by block_size
+    assert h % block_size == 0 and w % block_size == 0, "Image dimensions must be divisible by block size"
+
+    # Split the input and reference feature maps into blocks
+    x_blocks = x.unfold(2, block_size, block_size).unfold(3, block_size, block_size)
+    y_blocks = y.unfold(2, block_size, block_size).unfold(3, block_size, block_size)
+
+    # Reshape blocks to apply FSM
+    n_blocks, c_blocks, n_h, n_w, _, _ = x_blocks.size()
+    x_blocks = x_blocks.contiguous().view(n_blocks, c_blocks, -1, block_size, block_size)
+    y_blocks = y_blocks.contiguous().view(n_blocks, c_blocks, -1, block_size, block_size)
+
+    # Apply FSM on each block
+    x_fsm_blocks = []
+    for i in range(n_h):
+        for j in range(n_w):
+            x_block = x_blocks[:, :, i * n_w + j, :, :]
+            y_block = y_blocks[:, :, i * n_w + j, :, :]
+            x_fsm_block = high_order_FSM(x_block, y_block, alpha, eps)
+            x_fsm_blocks.append(x_fsm_block)
+
+    # Reshape back to the original feature map shape
+    x_fsm_blocks = torch.stack(x_fsm_blocks, dim=2)
+    x_fsm_blocks = x_fsm_blocks.view(n, c, n_h, n_w, block_size, block_size)
+    x_fsm = x_fsm_blocks.permute(0, 1, 2, 4, 3, 5).contiguous().view(n, c, h, w)
+
+    return x_fsm
+
+
+def discriminator(img, netD, use_lasm=False, device='cuda'):
+    x = img  # Assuming NxHxWxC
+    indices = torch.randperm(x.size(0)).to(device)
+    alpha = torch.rand(1).to(device)
+
+    for layer in netD.children():
+        # print(f"Processing layer: {type(layer)}")  # 打印当前层的类型
+        # before_shape = x.shape
+        x = layer(x)
+        # after_shape = x.shape
+        # print(f"Before shape: {before_shape}, After shape: {after_shape}")
+        if isinstance(layer, torch.nn.Conv2d) and use_lasm:  # Check if the layer is convolutional
+            y = x[indices]  # Shuffled batch
+            x = blockwise_FSM(x, y, alpha)
+
+    return x  # Assuming Nx1 for the output
+
+
+......
+ # Use lasm
+pred_fake_lasm = discriminator(fake_AB.detach(), self.netD, use_lasm=True, device=self.device)
+pred_real_lasm = discriminator(real_AB, self.netD, use_lasm=True, device=self.device)
+loss_D_lasm = F.mse_loss(pred_real, pred_real_lasm) + F.mse_loss(pred_fake, pred_fake_lasm)
+
+loss_D += self.loss_D_lasm
+......
+
 ```
-* The code for "Pixel-Level Contrastive Single Domain Generalization " is mainly found in `src/models/unet_pcsdg_simple.py`. The main code is as follows:
-```python
-class UNetPCSDG(nn.Module):
-    def __init__(self, resnet='resnet34', num_classes=2, pretrained=False):
-        super().__init__()
-        cut, lr_cut = [8, 6]
 
-        if resnet == 'resnet34':
-            base_model = resnet34
-        elif resnet == 'resnet18':
-            base_model = resnet18
-        elif resnet == 'resnet50':
-            base_model = resnet50
-        elif resnet == 'resnet101':
-            base_model = resnet101
-        elif resnet == 'resnet152':
-            base_model = resnet152
-        else:
-            raise Exception('The Resnet Model only accept resnet18, resnet34, resnet50,'
-                            'resnet101 and resnet152')
-
-        self.DWM = DWM()
-        layers = list(base_model(pretrained=pretrained).children())[:cut]
-        first_layer = layers[0]
-        other_layers = layers[1:]
-        base_layers = nn.Sequential(*other_layers)
-        self.first_layer = first_layer
-        self.rn = base_layers
-
-        self.num_classes = num_classes
-        self.sfs = [SaveFeatures(base_layers[i]) for i in [1, 3, 4, 5]]
-        self.up1 = UnetBlock(512, 256, 256)
-        self.up2 = UnetBlock(256, 128, 256)
-        self.up3 = UnetBlock(256, 64, 256)
-        self.up4 = UnetBlock(256, 64, 256)
-
-        self.up5 = nn.ConvTranspose2d(256, self.num_classes, 2, stride=2)
-
-    def forward_DisentangleWeightMap(self, x, return_map=False):
-        weight_map = self.DWM(x)
-        weight_map_content, weight_map_style = weight_map[:, 0:1, :, :], weight_map[:, 1:2, :, :]
-        image_content =  x * weight_map_content.expand_as(x)
-        image_style = x * weight_map_style.expand_as(x)
-
-        f_content = self.first_layer(image_content)  # 8 64 256 256
-        f_style = self.first_layer(image_style)
-        if return_map == True:
-            return f_content, f_style, weight_map
-        return f_content, f_style
-
-    def forward(self, x):
-        weight_map = self.DWM(x)
-        weight_map_content, weight_map_style = weight_map[:, 0:1, :, :], weight_map[:, 1:2, :, :]
-        image_content = x * weight_map_content.expand_as(x)
-        image_style = x * weight_map_style.expand_as(x)
-
-        f_content = self.first_layer(image_content)  # 8 64 256 256
-        f_style = self.first_layer(image_style)
-
-        x = F.relu(self.rn(f_content))
-        x = self.up1(x, self.sfs[3].features)
-        x = self.up2(x, self.sfs[2].features)
-        x = self.up3(x, self.sfs[1].features)
-        x = self.up4(x, self.sfs[0].features)
-        output = self.up5(x)
-
-        return output
-
-    def close(self):
-        for sf in self.sfs: sf.remove()
-```
 
 ## Citation :heart_eyes: :fire:
 If you find this repo useful for your research, please consider citing the paper as follows:
