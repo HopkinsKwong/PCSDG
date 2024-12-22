@@ -9,7 +9,7 @@ Keywords: **Single-source domain generalization**, **Joint optic cup and disc se
 ## Data Preparation
 We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dataset for our experiments. 
 
-* update\[2024.12.22\] -- Upload the preprocessed csv and python codes for REFUGE datasets. The preprocessed data in this article, you can download it directly via [Baidu Netdisk](https://pan.baidu.com/s/1400JPodPk_zkcBGCspgMfQ?pwd=9dpo) or [Google Drive](https://drive.google.com/file/d/1lIBJTbRy2v6l3zary3YkXp4ZOwDPcrWl/view?usp=sharing) (please cite this article and the REFUGE dataset literature).
+* update\[2024.12.22\] -- Upload the preprocessed csv and python codes for ***REFUGE*** datasets. The ***preprocessed data*** in this article, you can download it ***directly*** via [Baidu Netdisk](https://pan.baidu.com/s/1400JPodPk_zkcBGCspgMfQ?pwd=9dpo) or [Google Drive](https://drive.google.com/file/d/1lIBJTbRy2v6l3zary3YkXp4ZOwDPcrWl/view?usp=sharing) (please cite this article and the REFUGE dataset literature).
 
 ```
 Example:
