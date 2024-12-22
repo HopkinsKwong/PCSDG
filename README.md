@@ -206,5 +206,5 @@ author = {Jia-Xuan Jiang and Yuee Li and Zhong Wang}
 ```
 
 ## Acknowledgment :sparkles:
-This code is based on implementations by CCSDG ([https://github.com/ShishuaiHu/CCSDG](https://github.com/ShishuaiHu/CCSDG))
+This code is based on implementations by ([CCSDG](https://github.com/ShishuaiHu/CCSDG))
 
