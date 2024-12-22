@@ -15,7 +15,8 @@ We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dat
 Example:
 "REFUGE dataset \cite{orlando2020refuge} comprises 1,200 fundus images
 ......
-We used the REFUGE-train and REFUGE-val datasets as target domains and employed the same preprocessing method as PCSDG \cite{jiangpcsdg2025}."
+We used the REFUGE-train and REFUGE-val datasets as target domains and
+employed the same preprocessing method as PCSDG \cite{jiangpcsdg2025}."
 
 @article{jiangpcsdg2025,
 title = {Structure-aware single-source generalization with pixel-level disentanglement for joint optic disc and cup segmentation},
