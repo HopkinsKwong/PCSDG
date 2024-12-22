@@ -9,6 +9,34 @@ Keywords: **Single-source domain generalization**, **Joint optic cup and disc se
 ## Data Preparation
 We utilize the publicly available [RIGA+](https://zenodo.org/record/6325549) dataset for our experiments. 
 
+* update\[2024.12.22\] -- Upload the preprocessed csv and python codes for REFUGE datasets. The preprocessed data in this article, you can download it directly via [Baidu](https://pan.baidu.com/s/1400JPodPk_zkcBGCspgMfQ?pwd=9dpo) or [Google Drive](https://drive.google.com/file/d/1lIBJTbRy2v6l3zary3YkXp4ZOwDPcrWl/view?usp=sharing) (please cite this article and the REFUGE dataset literature).
+
+```
+Example:
+"REFUGE dataset \cite{orlando2020refuge} comprises 1,200 fundus images ...... We used the REFUGE-train and REFUGE-val datasets as target domains and employed the same preprocessing method as PCSDG \cite{jiangpcsdg2025}."
+
+@article{jiangpcsdg2025,
+title = {Structure-aware single-source generalization with pixel-level disentanglement for joint optic disc and cup segmentation},
+journal = {Biomedical Signal Processing and Control},
+volume = {99},
+pages = {106801},
+year = {2025},
+author = {Jia-Xuan Jiang and Yuee Li and Zhong Wang}
+}
+
+@article{orlando2020refuge,
+  title={Refuge challenge: A unified framework for evaluating automated methods for glaucoma assessment from fundus photographs},
+  author={Orlando, Jos{\'e} Ignacio and Fu, Huazhu and Breda, Jo{\~a}o Barbosa and Van Keer, Karel and Bathula, Deepti R and Diaz-Pinto, Andr{\'e}s and Fang, Ruogu and Heng, Pheng-Ann and Kim, Jeyoung and Lee, JoonHo and others},
+  journal={Medical image analysis},
+  volume={59},
+  pages={101570},
+  year={2020},
+  publisher={Elsevier}
+}
+
+```
+
+
 ## Model training and inference
 To use this project, follow the steps below:
 ```python
